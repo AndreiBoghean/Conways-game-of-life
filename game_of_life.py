@@ -1,24 +1,62 @@
 from collections import namedtuple
+import numpy as np
+import math
+import keyboard
 
 def ask(msg):
     print(msg)
     return input()
 
-def test1():
-    print("test1")
+def render_grid(grid):    
+    display_chars = dict(zip(
+        ["block_double", "empty_double"],
+        ["\u2588\u2588", "\u2591\u2591"]
+    ))
     
-def test2():
-    print("test2")
+    grid = grid.astype(str)
+    
+    grid[grid=="0"]=display_chars["empty_double"]
+    grid[grid=="1"]=display_chars["block_double"]
+    
+    print(grid)
+    for i in range(grid.shape[0]):
+        #print("".join(grid[i]))
+        line = ""
+        for ii in grid[i]:
+            line += f"{ii}{ii}"
+        print(line)
 
-placement_names = ["manual", "random"]
-placement_functions = [ test1, test2]
-placement_dict = dict(zip(placement_names, placement_functions))
-placement_mode = ask(f"what placement mode would you like to use? ({', '.join(placement_names)})")
-placement_dict[placement_mode]()
+def manual_placement(grid):
+    
+    print("looping")
+    looping = True
+    while looping:
+        if keyboard.is_pressed("w"):
+            print("w")
+        elif keyboard.is_pressed("a"):
+            print("a")
+        elif keyboard.is_pressed("s"):
+            print("s")
+        elif keyboard.is_pressed("d"):
+            print("d")
+        elif keyboard.is_pressed("q"):
+            looping = False
+            
+def random_placement(grid):
+    randoms = np.random.choice(["0", "0", "1"], grid.size)
+    grid = np.reshape(randoms, grid.shape)
+    
+    render_grid(grid)
 
+placement_dict = dict(zip(
+    ["manual", "random"],
+    [manual_placement, random_placement]
+    ))
 
-#named_characters = namedtuple("named_chars", "block_double empty_double")
-#named_chars = named_characters("\u2588\u2588", "\u2591\u2591")
+placement_mode = ask(f"what placement mode would you like to use? ({', '.join(placement_dict.keys())})")
 
-#rows = ask("how many rows?")
-#cols = ask("how many columns?")
+rows = int(ask("how many rows?"))
+cols = int(ask("how many columns?"))
+
+grid = np.zeros((rows, cols))
+placement_dict[placement_mode](grid)
