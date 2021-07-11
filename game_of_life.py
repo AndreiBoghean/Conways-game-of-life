@@ -1,11 +1,13 @@
 from collections import namedtuple
+import curses
 import numpy as np
 import math
-import keyboard
+import curses
 
-def ask(msg):
-    print(msg)
-    return input()
+def ask(msg, stdscr):
+    stdscr.addstr(msg)
+    stdscr.refresh()
+    #return input()
 
 def render_grid(grid):    
     display_chars = dict(zip(
@@ -27,7 +29,7 @@ def render_grid(grid):
         print(line)
 
 def manual_placement(grid):
-    
+    """
     print("looping")
     looping = True
     while looping:
@@ -41,7 +43,8 @@ def manual_placement(grid):
             print("d")
         elif keyboard.is_pressed("q"):
             looping = False
-            
+       """
+       
 def random_placement(grid):
     randoms = np.random.choice(["0", "0", "1"], grid.size)
     grid = np.reshape(randoms, grid.shape)
@@ -53,10 +56,19 @@ placement_dict = dict(zip(
     [manual_placement, random_placement]
     ))
 
-placement_mode = ask(f"what placement mode would you like to use? ({', '.join(placement_dict.keys())})")
+def main(stdscr):
+    stdscr=curses.initscr()
+    curses.noecho()
+    curses.nocbreak()
+    stdscr.addstr("test_test")
+    stdscr.refresh()
+    return
+    placement_mode = ask(f"what placement mode would you like to use? ({', '.join(placement_dict.keys())})")
 
-rows = int(ask("how many rows?"))
-cols = int(ask("how many columns?"))
+    rows = int(ask("how many rows?"))
+    cols = int(ask("how many columns?"))
 
-grid = np.zeros((rows, cols))
-placement_dict[placement_mode](grid)
+    grid = np.zeros((rows, cols))
+    placement_dict[placement_mode](grid)
+    
+curses.wrapper(main)
