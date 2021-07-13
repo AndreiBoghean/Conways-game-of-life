@@ -29,21 +29,7 @@ def render_grid(grid):
         print(line)
 
 def manual_placement(grid):
-    """
-    print("looping")
-    looping = True
-    while looping:
-        if keyboard.is_pressed("w"):
-            print("w")
-        elif keyboard.is_pressed("a"):
-            print("a")
-        elif keyboard.is_pressed("s"):
-            print("s")
-        elif keyboard.is_pressed("d"):
-            print("d")
-        elif keyboard.is_pressed("q"):
-            looping = False
-       """
+    print("unimplemented")
        
 def random_placement(grid):
     randoms = np.random.choice(["0", "0", "1"], grid.size)
@@ -57,7 +43,7 @@ placement_dict = dict(zip(
     ))
 
 def main(stdscr):
-    stdscr=curses.initscr()
+    
     curses.noecho()
     curses.nocbreak()
     stdscr.addstr("test_test")
