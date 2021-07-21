@@ -2,12 +2,14 @@ from collections import namedtuple
 import curses
 import numpy as np
 import math
-import curses
+import curses as curses
 
-def ask(msg, stdscr):
+stdscr = curses.initscr() 
+
+def ask(msg):
     stdscr.addstr(msg)
     stdscr.refresh()
-    #return input()
+    #return std.scr
 
 def render_grid(grid):    
     display_chars = dict(zip(
@@ -42,12 +44,18 @@ placement_dict = dict(zip(
     [manual_placement, random_placement]
     ))
 
-def main(stdscr):
+def main():#stdscr):
+    
+    #stdscr = curses.initscr()
     
     curses.noecho()
-    curses.nocbreak()
-    stdscr.addstr("test_test")
+    
+    stdscr.addstr("\n".join(np.full(30, "test_test")))
     stdscr.refresh()
+    key = stdscr.getstr()
+    curses.echo()
+    curses.endwin()
+    print(key.decode())
     return
     placement_mode = ask(f"what placement mode would you like to use? ({', '.join(placement_dict.keys())})")
 
@@ -57,4 +65,6 @@ def main(stdscr):
     grid = np.zeros((rows, cols))
     placement_dict[placement_mode](grid)
     
-curses.wrapper(main)
+#curses.wrapper(main)
+#main(curses.initscr())
+main()
