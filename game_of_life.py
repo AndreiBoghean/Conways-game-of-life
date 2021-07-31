@@ -6,14 +6,24 @@ import curses as curses
 
 def entry(stdscr):
     
-    def write(msg):
-        stdscr.addstr(msg)
+    colours = dict(zip(
+        ["default", "grid"],
+        [0, 1]
+        ))
+    
+    curses.init_pair(colours["grid"], curses.COLOR_WHITE, curses.COLOR_BLUE)
+     
+    def write(msg, colour_index = 0):
+        stdscr.addstr(msg, curses.color_pair(colour_index))
         stdscr.refresh()
     
-    def ask(msg):
+    def write_line(msg, colour_index = 0):
+        write(msg+"\n", colour_index)
+    
+    def ask(msg, colour_index = 0):
         
         curses.echo()
-        write(msg)
+        write_line(msg, colour_index)
         answ = stdscr.getstr()
         curses.noecho()
         return answ.decode()
@@ -32,26 +42,58 @@ def entry(stdscr):
         
         print(grid)
         for i in range(grid.shape[0]):
-            #write("".join(grid[i]) + "\n")
-            
             line = ""
             for ii in grid[i]:
                 line += f"{ii}{ii}"
-            write(line + "\n")
+            write_line(line, 1)
                     
     def manual_placement(grid):
-        write("\nunimplemented manual_placement()\n")
+        write_line("unimplemented manual_placement()")
            
     def random_placement(grid):
         
         randoms = np.random.choice(["0", "0", "1"], grid.size)
         grid = np.reshape(randoms, grid.shape)
         
-        render_grid(grid)
+        return grid
     
     def conways(grid):
-        write("\nunimplemeneted conways()\n")
-    
+        grid = grid.astype(int)
+        new_grid = np.zeros(np.shape(grid))
+
+        for y in range(np.shape(new_grid)[0]):
+            for x in range(np.shape(new_grid)[1]):
+                print([*range(np.shape(new_grid)[0])])
+                print(f"[{x}, {y}] = [{new_grid[y, x]}, {grid[y, x]}]")
+                
+                tempX = x
+                if tempX+1 == np.shape(new_grid)[1]:
+                    tempX = 0
+                
+                tempY = y
+                if tempY+1 == np.shape(new_grid)[0]:
+                    tempY = 0
+                
+                
+                write(f"{grid[y-1, x-1]=} | {grid[y-1, x]=} | {grid[y-1, tempX]=}")
+                write_line(f"{grid[y, x-1]=} | {grid[y, tempX]=}")
+                write_line(f"{grid[tempY, x-1]=} | {grid[tempY, x]=} | {grid[tempY, tempX]=}")
+                write_line("|")
+                
+                 
+                new_grid[y, x] = (
+                grid[y-1, x-1]+grid[y-1, x]+grid[y-1, tempX]+
+                grid[y, x-1]+grid[y, tempX]+
+                grid[tempY, x-1]+grid[tempY, x]+grid[tempY, tempX]
+                )
+        
+        write_line("new_grid:")
+        for i in range(new_grid.shape[0]):
+            line = ""
+            for ii in new_grid[i]:
+                line += f"{ii}|"
+            write_line(line, 1)
+                
     placement_dict = dict(zip(
         ["manual", "random"],
         [manual_placement, random_placement]
@@ -59,28 +101,23 @@ def entry(stdscr):
     
     curses.noecho()
     
-    stdscr.addstr("\n".join(np.full(30, "test_test")) + "\n")
-    stdscr.refresh()
-    
-    """
-    q=ask("test question:")
-    key = stdscr.getstr()
-    curses.echo()
-    curses.endwin()
-    print(key.decode())
-    
-    stdscr.addstr(f"\n{q=}\n")                                                 
-    print(f"\n{q=}\n")
-    """
+    if not curses.has_colors():
+        write_line("your console does not support colour, some text may be unreadable")
     
     placement_mode = ask(f"what placement mode would you like to use? ({', '.join(placement_dict.keys())})")
 
-    rows = int(ask("how many rows?"))
-    cols = int(ask("how many columns?"))
+    rows = int(ask("how many rows? (min 3)"))
+    cols = int(ask("how many columns? (min 3)"))
 
+    if rows < 3:
+        rows = 3
+    if cols < 3:
+        cols = 3
+    
     grid = np.zeros((rows, cols))
     grid = placement_dict[placement_mode](grid)
+    render_grid(grid)
     conways(grid)
     
     ask("press enter to exit program")
-curses.wrapper(entry) 
+curses.wrapper(entry)
