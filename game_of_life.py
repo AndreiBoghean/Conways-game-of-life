@@ -3,6 +3,8 @@ import curses
 import numpy as np
 import curses as curses
 
+from numpy.core.fromnumeric import std
+
 
 def entry(stdscr):
     
@@ -27,6 +29,9 @@ def entry(stdscr):
         answ = stdscr.getstr()
         curses.noecho()
         return answ.decode()
+    
+    def print_details(mode, rows, cols, itter):
+        write_line(f"mode: {mode} rows: {rows} cols: {cols} itteration number: {iterr}")
     
     def render_grid(grid):
         
@@ -102,10 +107,13 @@ def entry(stdscr):
         write_line("your console does not support colour, some text may be unreadable")
     
     placement_mode = ask(f"what placement mode would you like to use? ({', '.join(placement_dict.keys())})")
-
+    stdscr.clear()
+    
     rows = int(ask("how many rows? (min 3)"))
+    stdscr.clear()
     cols = int(ask("how many columns? (min 3)"))
-
+    stdscr.clear()
+    
     if rows < 3:
         rows = 3
     if cols < 3:
