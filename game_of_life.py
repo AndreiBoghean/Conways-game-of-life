@@ -22,23 +22,40 @@ def entry(stdscr):
     def write_line(msg, colour_index = 0):
         write(msg+"\n", colour_index)
     
-    def ask(msg, colour_index = 0):
-        
-        curses.echo()
-        write_line(msg, colour_index)
+    def read():
+        write(stdscr.getkey())
+    
+    def read_line():
         answ = stdscr.getstr()
         curses.noecho()
         return answ.decode()
     
+    def ask(msg, colour_index = 0):
+        
+        curses.echo()
+        write_line(msg, colour_index)
+        return read_line()
+    
     class conway_grid:
         
         def __init__(self, mode, rows, cols):
+            self.mode = mode; self.rows = rows; self.cols = cols
+            
+            #self.grids.append(np.zeros((rows, cols)))
+            #self.placement_dict[mode]()
+            
             populated_grid = self.placement_dict[mode](np.zeros((rows, cols)))
-            array_of_grids = [populated_grid]
-            self.grids = np.array(array_of_grids)
-                       
+            self.grids.append(populated_grid)
+
         def manual_placement(grid):
-            write_line("unimplemented manual_placement()")
+            write_line("controls: WASD/arrow keys for cursor movement, space to toggle alive/dead, enter to complete")
+            curses.noecho(); curses.cbreak()
+            stdscr.keypad(True)
+            ask(f"{read_line()=}")
+            curses.echo()
+            
+            return grid
+            
            
         def random_placement(grid):
         
@@ -46,7 +63,6 @@ def entry(stdscr):
             grid = np.reshape(randoms, grid.shape)
         
             return grid
-    
         
         mode = ""
         placement_dict = dict(zip(
@@ -55,8 +71,7 @@ def entry(stdscr):
         )) 
         
         grids = []
-        rows = 3
-        cols = 3
+        rows = 3; cols = 3
         
         def print_details(self):
             write_line(f"mode: {self.mode} rows: {self.rows} cols: {self.cols} iteration number: {len(self.grids)}")
@@ -107,36 +122,29 @@ def entry(stdscr):
                         new_grid[y, x] = 1
 
             self.grids.append(new_grid)
-        
-    
-    
-    
+
+
+
+
     if not curses.has_colors():
         write_line("your console does not support colour, some text may be unreadable")
     
     #placement_mode = ask(f"what placement mode would you like to use? ({', '.join(placement_dict.keys())})")
-    placement_mode = ask(f"what placement mode would you like to use? (manual, random)")
-    stdscr.clear()
+    placement_mode = ask(f"what placement mode would you like to use? (manual, random)"); stdscr.clear()
     
-    rows = int(ask("how many rows? (min 3)"))
-    stdscr.clear()
-    cols = int(ask("how many columns? (min 3)"))
-    stdscr.clear()
+    rows = int(ask("how many rows? (min 3)")); stdscr.clear()
+    cols = int(ask("how many columns? (min 3)")); stdscr.clear()
     
-    if rows < 3:
-        rows = 3
-    if cols < 3:
-        cols = 3
+    if rows < 3: rows = 3
+    if cols < 3: cols = 3
     
     grid = conway_grid(placement_mode, rows, cols)
     
     while True:
 
-        grid.print_details()
-        grid.print_grid(-1)
+        grid.print_details(); grid.print_grid(-1)
     
-        if ask("would you like to render the next step? (yes/no)")[0] != "y":
-            break
+        if ask("would you like to render the next step? (yes/no)")[0] != "y": break
         
         grid.iterate()
     
