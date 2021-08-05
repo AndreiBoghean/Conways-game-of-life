@@ -4,6 +4,7 @@ import numpy as np
 import curses as curses
 
 from numpy.core.fromnumeric import std
+from numpy.random.mtrand import random
 
 
 def entry(stdscr):
@@ -23,7 +24,7 @@ def entry(stdscr):
         write(msg+"\n", colour_index)
     
     def read():
-        write(stdscr.getkey())
+        return stdscr.getkey()
     
     def read_line():
         answ = stdscr.getstr()
@@ -44,49 +45,112 @@ def entry(stdscr):
             #self.grids.append(np.zeros((rows, cols)))
             #self.placement_dict[mode]()
             
-            populated_grid = self.placement_dict[mode](np.zeros((rows, cols)))
+            self.grids.append(np.zeros((rows, cols)).astype(int))
+            populated_grid = self.placement_dict[mode](self, -1)
             self.grids.append(populated_grid)
 
-        def manual_placement(grid):
-            write_line("controls: WASD/arrow keys for cursor movement, space to toggle alive/dead, enter to complete")
-            curses.noecho(); curses.cbreak()
-            stdscr.keypad(True)
-            ask(f"{read_line()=}")
-            curses.echo()
-            
-            return grid
-            
-           
-        def random_placement(grid):
-        
-            randoms = np.random.choice([0, 0, 1], grid.size)
-            grid = np.reshape(randoms, grid.shape)
-        
-            return grid
-        
         mode = ""
-        placement_dict = dict(zip(
-        ["manual", "random"],
-        [manual_placement, random_placement]
-        )) 
         
         grids = []
         rows = 3; cols = 3
         
+        display_chars = dict(zip(
+            ["block_double", "empty_double"],
+            ["\u2588\u2588", "\u2591\u2591"]
+        ))
+
+        def manual_placement(self, index):
+            grid = self.grids[index]
+            write_line("controls: WASD/arrow keys for cursor movement, space to toggle alive/dead, enter to complete")
+            curses.noecho(); curses.cbreak()
+            stdscr.keypad(True)
+            
+            self.print_grid(-1)
+            
+            origin = curses.getsyx()
+            y_pos = 0
+            x_pos = 0
+            
+            def update_cursor_attr(screen_y, screen_x, attr):
+                
+                char = chr(stdscr.inch(screen_y, screen_x) & 0xFF)
+                
+                stdscr.addstr(
+                    screen_y, screen_x,
+                    char+char,
+                    attr,
+                    curses.color_pair(1)
+                    )
+                
+                    #inchh = chr(stdscr.inch(screen_y, screen_x) & 0xFF)
+                    #write_line(f"{inchh}{inchh}")
+                
+            grid_shape = np.shape(grid)
+            new_grid = grid
+            while True:
+                screen_y = origin[0]+2*y_pos
+                screen_x = origin[1]+2*x_pos
+                
+                input = read()
+                update_cursor_attr(screen_y, screen_x, curses.A_BLINK)
+                
+                if input == "w" or input == curses.KEY_UP:
+                    update_cursor_attr(screen_y, screen_x, curses.A_NORMAL)
+                    if y_pos == 0: y_pos = grid_shape[0]-1
+                    else: y_pos -= 1
+                elif input == "a" or input == curses.KEY_LEFT:
+                    update_cursor_attr(screen_y, screen_x, curses.A_NORMAL)
+                    if x_pos == 0: x_pos = grid_shape[0]-1
+                    else: x_pos -= 1
+                elif input == "s" or input == curses.KEY_DOWN:
+                    update_cursor_attr(screen_y, screen_x, curses.A_NORMAL)
+                    if y_pos == grid_shape[0]-1: y_pos = 0
+                    else: y_pos += 1
+                elif input == "d" or input == curses.KEY_RIGHT:
+                    update_cursor_attr(screen_y, screen_x, curses.A_NORMAL)
+                    if x_pos == grid_shape[0]-1: x_pos = 0
+                    else: x_pos += 1
+                elif input == " ":
+                    new_text = "empty_double"
+                    new_state = (grid[y_pos, x_pos]-1)**2
+                    
+                    new_grid[y_pos, x_pos] = new_state
+                    
+                    if new_state == 1: new_text = "block_double"
+                    stdscr.addscr(screen_y, screen_x, new_text, curses.A_BLINK, curses.color_pair(1))
+                elif input == "\n":
+                    break
+                update_cursor_attr(screen_y, screen_x, curses.A_BLINK)
+                
+            curses.echo()
+            return grid
+            
+        def random_placement(self, index):
+        
+            randoms = np.random.choice([0, 0, 1], self.grids[index].size)
+            grid = np.reshape(randoms, self.grids[index].shape)
+        
+            return grid
+        
+        def both_placement(self, index):
+            self.grids.append(self.random_placement(index))
+            return self.manual_placement(index)
+        
+        placement_dict = dict(zip(
+        ["manual", "random", "both"],
+        [manual_placement, random_placement, both_placement]
+        ))
+                
         def print_details(self):
             write_line(f"mode: {self.mode} rows: {self.rows} cols: {self.cols} iteration number: {len(self.grids)}")
         
         def print_grid(self, index):
             grid = self.grids[index]
-            display_chars = dict(zip(
-                ["block_double", "empty_double"],
-                ["\u2588\u2588", "\u2591\u2591"]
-            ))
 
             grid = grid.astype(str)
 
-            grid[grid=="0"]=display_chars["empty_double"]
-            grid[grid=="1"]=display_chars["block_double"]
+            grid[grid=="0"]=self.display_chars["empty_double"]
+            grid[grid=="1"]=self.display_chars["block_double"]
 
             for i in grid:
                 write_line("".join(i), 1)
@@ -124,13 +188,11 @@ def entry(stdscr):
             self.grids.append(new_grid)
 
 
-
-
     if not curses.has_colors():
         write_line("your console does not support colour, some text may be unreadable")
     
     #placement_mode = ask(f"what placement mode would you like to use? ({', '.join(placement_dict.keys())})")
-    placement_mode = ask(f"what placement mode would you like to use? (manual, random)"); stdscr.clear()
+    placement_mode = ask(f"what placement mode would you like to use? (manual, random, both)"); stdscr.clear()
     
     rows = int(ask("how many rows? (min 3)")); stdscr.clear()
     cols = int(ask("how many columns? (min 3)")); stdscr.clear()
