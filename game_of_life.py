@@ -10,11 +10,14 @@ from numpy.random.mtrand import random
 def entry(stdscr):
     
     colours = dict(zip(
-        ["default", "grid"],
-        [0, 1]
+        ["default", "grid", "selected", "error", "warning"],
+        [0, 1, 2, 3, 4]
         ))
     
     curses.init_pair(colours["grid"], curses.COLOR_WHITE, curses.COLOR_BLUE)
+    curses.init_pair(colours["selected"], curses.COLOR_WHITE, curses.COLOR_BLUE)
+    curses.init_pair(colours["error"], curses.COLOR_WHITE, curses.COLOR_RED)
+    curses.init_pair(colours["warning"], curses.COLOR_WHITE, curses.COLOR_YELLOW)
      
     def write(msg, colour_index = 0):
         stdscr.addstr(msg, curses.color_pair(colour_index))
@@ -71,15 +74,14 @@ def entry(stdscr):
             y_pos = 0
             x_pos = 0
             
-            def update_cursor_attr(screen_y, screen_x, attr):
+            def update_cursor_attr(screen_y, screen_x, colour_name):
                 
                 char = chr(stdscr.inch(screen_y, screen_x) & 0xFF)
                 
                 stdscr.addstr(
                     screen_y, screen_x,
                     char+char,
-                    attr,
-                    curses.color_pair(1)
+                    curses.color_pair(colours[colour_name])
                     )
                 
                     #inchh = chr(stdscr.inch(screen_y, screen_x) & 0xFF)
@@ -88,26 +90,27 @@ def entry(stdscr):
             grid_shape = np.shape(grid)
             new_grid = grid
             while True:
-                screen_y = origin[0]+2*y_pos
+                screen_y = origin[0]+y_pos
                 screen_x = origin[1]+2*x_pos
                 
+                update_cursor_attr(screen_y, screen_x, "selected")
+                
                 input = read()
-                update_cursor_attr(screen_y, screen_x, curses.A_BLINK)
                 
                 if input == "w" or input == curses.KEY_UP:
-                    update_cursor_attr(screen_y, screen_x, curses.A_NORMAL)
+                    update_cursor_attr(screen_y, screen_x, "error")
                     if y_pos == 0: y_pos = grid_shape[0]-1
                     else: y_pos -= 1
                 elif input == "a" or input == curses.KEY_LEFT:
-                    update_cursor_attr(screen_y, screen_x, curses.A_NORMAL)
+                    update_cursor_attr(screen_y, screen_x, "error")
                     if x_pos == 0: x_pos = grid_shape[0]-1
                     else: x_pos -= 1
                 elif input == "s" or input == curses.KEY_DOWN:
-                    update_cursor_attr(screen_y, screen_x, curses.A_NORMAL)
+                    update_cursor_attr(screen_y, screen_x, "error")
                     if y_pos == grid_shape[0]-1: y_pos = 0
                     else: y_pos += 1
                 elif input == "d" or input == curses.KEY_RIGHT:
-                    update_cursor_attr(screen_y, screen_x, curses.A_NORMAL)
+                    update_cursor_attr(screen_y, screen_x, "error")
                     if x_pos == grid_shape[0]-1: x_pos = 0
                     else: x_pos += 1
                 elif input == " ":
@@ -117,19 +120,20 @@ def entry(stdscr):
                     new_grid[y_pos, x_pos] = new_state
                     
                     if new_state == 1: new_text = "block_double"
-                    stdscr.addscr(screen_y, screen_x, new_text, curses.A_BLINK, curses.color_pair(1))
+                    stdscr.addstr(screen_y, screen_x, self.display_chars[new_text], curses.color_pair(colours["selected"]))
                 elif input == "\n":
-                    break
-                update_cursor_attr(screen_y, screen_x, curses.A_BLINK)
-                
-            curses.echo()
-            return grid
+                    stdscr.clear()
+                    curses.echo()
+                    return grid
             
+                update_cursor_attr(screen_y, screen_x, "selected")
+                
+
         def random_placement(self, index):
         
             randoms = np.random.choice([0, 0, 1], self.grids[index].size)
             grid = np.reshape(randoms, self.grids[index].shape)
-        
+         
             return grid
         
         def both_placement(self, index):
@@ -137,7 +141,7 @@ def entry(stdscr):
             return self.manual_placement(index)
         
         placement_dict = dict(zip(
-        ["manual", "random", "both"],
+        ["manual", "random", "both"], 
         [manual_placement, random_placement, both_placement]
         ))
                 
