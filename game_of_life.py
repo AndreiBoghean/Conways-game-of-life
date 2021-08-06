@@ -58,8 +58,8 @@ def entry(stdscr):
         rows = 3; cols = 3
         
         display_chars = dict(zip(
-            ["block_double", "empty_double"],
-            ["\u2588\u2588", "\u2591\u2591"]
+            ["empty_double", "block_double"],
+            ["\u2591\u2591", "\u2588\u2588"]
         ))
 
         def manual_placement(self, index):
@@ -68,20 +68,22 @@ def entry(stdscr):
             curses.noecho(); curses.cbreak()
             stdscr.keypad(True)
             
-            self.print_grid(-1)
-            
             origin = curses.getsyx()
             y_pos = 0
             x_pos = 0
             
+            self.print_grid(-1)
+            
             def update_cursor_attr(screen_y, screen_x, colour_name):
                 
-                char = chr(stdscr.inch(screen_y, screen_x) & 0xFF)
-                
+                #char = chr(stdscr.inch(screen_y, screen_x) & 0xFF)
+                char = list(self.display_chars.values())[grid[y_pos, x_pos]]
+                col = curses.color_pair(colours[colour_name])
+                pair = curses.pair_content(colours[colour_name])
                 stdscr.addstr(
                     screen_y, screen_x,
                     char+char,
-                    curses.color_pair(colours[colour_name])
+                    col
                     )
                 
                     #inchh = chr(stdscr.inch(screen_y, screen_x) & 0xFF)
