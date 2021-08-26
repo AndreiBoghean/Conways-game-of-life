@@ -15,7 +15,7 @@ def entry(stdscr):
         ))
     
     curses.init_pair(colours["grid"], curses.COLOR_WHITE, curses.COLOR_BLUE)
-    curses.init_pair(colours["selected"], curses.COLOR_WHITE, curses.COLOR_BLUE)
+    curses.init_pair(colours["selected"], curses.COLOR_CYAN, curses.COLOR_MAGENTA)
     curses.init_pair(colours["error"], curses.COLOR_WHITE, curses.COLOR_RED)
     curses.init_pair(colours["warning"], curses.COLOR_WHITE, curses.COLOR_YELLOW)
      
@@ -72,19 +72,20 @@ def entry(stdscr):
             y_pos = 0
             x_pos = 0
             
-            self.print_grid(-1)
+            self.print_grid(index)
             
             def update_cursor_attr(screen_y, screen_x, colour_name):
                 
                 #char = chr(stdscr.inch(screen_y, screen_x) & 0xFF)
                 char = list(self.display_chars.values())[grid[y_pos, x_pos]]
+                #char = ["00", "11"][grid[y_pos, x_pos]]
                 col = curses.color_pair(colours[colour_name])
-                pair = curses.pair_content(colours[colour_name])
                 stdscr.addstr(
                     screen_y, screen_x,
-                    char+char,
+                    char,
                     col
                     )
+                stdscr.refresh()
                 
                     #inchh = chr(stdscr.inch(screen_y, screen_x) & 0xFF)
                     #write_line(f"{inchh}{inchh}")
@@ -100,19 +101,19 @@ def entry(stdscr):
                 input = read()
                 
                 if input == "w" or input == curses.KEY_UP:
-                    update_cursor_attr(screen_y, screen_x, "error")
+                    update_cursor_attr(screen_y, screen_x, "grid")
                     if y_pos == 0: y_pos = grid_shape[0]-1
                     else: y_pos -= 1
                 elif input == "a" or input == curses.KEY_LEFT:
-                    update_cursor_attr(screen_y, screen_x, "error")
+                    update_cursor_attr(screen_y, screen_x, "grid")
                     if x_pos == 0: x_pos = grid_shape[0]-1
                     else: x_pos -= 1
                 elif input == "s" or input == curses.KEY_DOWN:
-                    update_cursor_attr(screen_y, screen_x, "error")
+                    update_cursor_attr(screen_y, screen_x, "grid")
                     if y_pos == grid_shape[0]-1: y_pos = 0
                     else: y_pos += 1
                 elif input == "d" or input == curses.KEY_RIGHT:
-                    update_cursor_attr(screen_y, screen_x, "error")
+                    update_cursor_attr(screen_y, screen_x, "grid")
                     if x_pos == grid_shape[0]-1: x_pos = 0
                     else: x_pos += 1
                 elif input == " ":
@@ -128,7 +129,7 @@ def entry(stdscr):
                     curses.echo()
                     return grid
             
-                update_cursor_attr(screen_y, screen_x, "selected")
+                #update_cursor_attr(screen_y, screen_x, "selected")
                 
 
         def random_placement(self, index):
@@ -209,7 +210,7 @@ def entry(stdscr):
     grid = conway_grid(placement_mode, rows, cols)
     
     while True:
-
+        stdscr.clear()
         grid.print_details(); grid.print_grid(-1)
     
         if ask("would you like to render the next step? (yes/no)")[0] != "y": break
